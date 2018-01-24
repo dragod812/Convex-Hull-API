@@ -4,8 +4,10 @@ GLADH = include/glad.h
 GLADC = include/glad.c
 GLAD = glad.o $(GLADH)
 shader = include/shader.h
-main: main.cpp $(GLAD) $(shader)
-	g++ main.cpp $(GLAD) $(LIBS)
+convexhull = include/ConvexHull.h
+point = include/Point.h
+main: main.cpp $(convexhull) $(point) $(GLAD) $(shader)
+	g++ main.cpp $(GLAD) $(LIBS) $(CFLAGS)
 glad.o: $(GLADH)
 	g++ -c $(GLADC)
 ConvexHull: ConvexHull.cpp Point.h

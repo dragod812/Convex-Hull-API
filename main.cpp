@@ -1,5 +1,7 @@
 #include "include/glad.h"
 #include "include/shader.h"
+#include "include/Point.h"
+#include "include/ConvexHull.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -12,6 +14,8 @@ using namespace std;
 const GLuint SCR_WIDTH = 1920;
 const GLuint SCR_HEIGHT = 1080;
 vector< vec3 > Points;
+vector< vec3 > linePoints;
+vector< Point > chPoints;
 void normalize(double *x, double *y){
 	*y = SCR_HEIGHT - *y;
 	*y = (*y*2)/(SCR_HEIGHT);
@@ -36,7 +40,18 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		glfwGetCursorPos(window, &xpos, &ypos);
 		normalize(&xpos, &ypos);
 		Points.push_back(vec3(xpos, ypos, 0));
-		cout << xpos << ',' << ypos << endl;
+		//cout << xpos << ',' << ypos << endl;
+		Point chp;
+		chp.x = xpos;
+		chp.y = ypos;
+		chPoints.push_back(chp);
+		if(chPoints.size() > 2){
+			ConvexHull CH(chPoints, CONVEX_HULL_ALGO::GRAHAMS_SCAN);
+			linePoints.resize(0);
+			for(size_t i = 0;i<CH.convexHull.size();i++){
+				linePoints.push_back(vec3(CH.convexHull[i].x, CH.convexHull[i].y, 0.0));
+			}
+		}
 	}
 }
 int main(){
@@ -70,19 +85,33 @@ int main(){
 
 	//mouse button callback
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-	//define vertex array objects and vertex buffer objects
-	//VAO:subsequent vertex attribute calls from that point on will be stored inside the VAO. All the bindings of buffers are stored in the vertex array object.
-	//VBO:store a large number of vertices in the GPU's memory. The advantage of using those buffer objects is that we can send large batches of data all at once to the graphics card without having to send data a vertex a time.
+
 
 
 
 
 	while(!glfwWindowShouldClose(window)){
+		//define vertex array objects and vertex buffer objects
+		//VAO:subsequent vertex attribute calls from that point on will be stored inside the VAO. All the bindings of buffers are stored in the vertex array object.
+		//VBO:store a large number of vertices in the GPU's memory. The advantage of using those buffer objects is that we can send large batches of data all at once to the graphics card without having to send data a vertex a time.
+		// VAO and VBO for Points
 		GLuint VAOP, VBOP;
 		glGenVertexArrays(1, &VAOP);
 		glGenBuffers(1, &VBOP);
 		glBindVertexArray(VAOP);
 		glBindBuffer(GL_ARRAY_BUFFER, VBOP);
+		glBufferData(GL_ARRAY_BUFFER, Points.size()*sizeof(vec3), &Points[0], GL_DYNAMIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), NULL);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		//VAO and VBO for lines
+		GLuint VAOL, VBOL;
+		glGenVertexArrays(1, &VAOL);
+		glGenBuffers(1, &VBOL);
+		glBindVertexArray(VAOL);
+		glBindBuffer(GL_ARRAY_BUFFER, VBOL);
 		glBufferData(GL_ARRAY_BUFFER, Points.size()*sizeof(vec3), &Points[0], GL_DYNAMIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), NULL);
 		glEnableVertexAttribArray(0);
@@ -101,6 +130,9 @@ int main(){
 		sh.setVec3("color", vec3(1.0, 0.0, 1.0));
         glDrawArrays(GL_POINTS, 0, Points.size());
 
+		glBindVertexArray(VAOL);
+		sh.setVec3("color", vec3(0.0, 1.0, 0.0));
+		glDrawArrays(GL_LINE_LOOP, 0, linePoints.size());
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
