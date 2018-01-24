@@ -49,28 +49,41 @@ private:
 		points[minIndx] = points[0];
 		points[0] = lowestPoint;
 	}
-	double crossProduct(pair<double, double> vl, pair<double, double> vr){
-		return (vl.first*vr.second - vl.second*vr.first );
+	//form a vector from the given index point to all the points and store it in sorted
+	void vectorise(int indx){
+		for(int i = 0;i<sortedPoints.size();i++){
+			if(i != indx){
+				sortedPoints[i] = makeVector(sortedPoints[i], sortedPoints[indx]);
+			}
+		}
 	}
-	double magnitude2(pair<double, double> v){
-		return v.first*v.first + v.second*v.second;
+	Point makeVector(Point p1, Point p2){
+		Point p3(p2.x - p1.x, p2.y - p1.y);
+		return p3;
 	}
-	pair<double, double> makeVector(Point p1, Point p2){
-		return make_pair(p2.x - p1.x, p2.y - p1.y);
+	//get the points back from the vectors given the reference index
+	void unvectorise(int indx){
+		for(int i = 0;i<sortedPoints.size();i++){
+			if(i != indx){
+				sortedPoints[i].x = sortedPoints[i].x + sortedPoints[indx].x;
+				sortedPoints[i].y = sortedPoints[i].y + sortedPoints[indx].y;
+			}
+		}
 	}
+	double crossProduct(Point l, Point r){
+		return (l.x*r.y - r.x*l.y);
+	}
+	double magnitude2(Point l){
+		return l.x*l.x + l.y*l.y;
+	}
+
 	static bool comparePoints(const Point &l, const Point &r) {
-		pair<double, double> vl, vr;
-		vl = make_pair(l.x - lowestPoint.x, l.y - lowestPoint.y);
-		vr = make_pair(r.x - lowestPoint.x, r.y - lowestPoint.y);
-		return ((vl.first*vr.second - vl.second*vr.first) > 0);
+		return ((l.x*r.y - r.x*l.y) > 0);
 	}
 	void removeDegeneracies(){
 		for(int i = 1;i<sortedPoints.size()-1;i++){
-			pair<double, double> v1, v2;
-			v1 = make_pair(sortedPoints[i].x - lowestPoint.x, sortedPoints[i].y - lowestPoint.y);
-			v2 = make_pair(sortedPoints[i+1].x - lowestPoint.x, sortedPoints[i+1].y - lowestPoint.y);
-			if(crossProduct(v1, v2) == 0){
-				if(magnitude2(v1) < magnitude2(v2)){
+			if(crossProduct(sortedPoints[i], sortedPoints[i+1]) == 0){
+				if(magnitude2(sortedPoints[i]) < magnitude2(sortedPoints[i+1])){
 					sortedPoints.erase(sortedPoints.begin() + i);
 				}
 				else{
@@ -82,8 +95,11 @@ private:
 	void GrahamsScan(){
 		LowestIndex();
 		sortedPoints = points;
+		vectorise(0);
 		sort(sortedPoints.begin()+1, sortedPoints.end(), comparePoints);
 		//removeDegeneracies();
+		unvectorise(0);
+
 		convexHull.push_back(sortedPoints[0]);
 		convexHull.push_back(sortedPoints[1]);
 		convexHull.push_back(sortedPoints[2]);
@@ -92,8 +108,8 @@ private:
 			convexHull.pop_back();
 			Point p1 = convexHull.back();
 			Point p3 = sortedPoints[i];
-			pair<double, double> v2 = makeVector(p1, p2);
-			pair<double, double> v3 = makeVector(p2, p3);
+			Point v2 = makeVector(p1, p2);
+			Point v3 = makeVector(p2, p3);
 			double cp = crossProduct(v2, v3);
 			if(cp >= 0){
 				convexHull.push_back(p2);
