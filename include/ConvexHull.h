@@ -2,6 +2,7 @@
 #define CONVEX_HULL_H
 #include<vector>
 #include "Point.h"
+#include<iostream>
 #include<utility>
 #include<algorithm>
 using namespace std;
@@ -54,7 +55,7 @@ private:
 	void vectorise(int indx){
 		for(size_t i = 0;i<sortedPoints.size();i++){
 			if(i != indx){
-				sortedPoints[i] = makeVector(sortedPoints[i], sortedPoints[indx]);
+				sortedPoints[i] = makeVector(sortedPoints[indx], sortedPoints[i]);
 			}
 		}
 	}
@@ -77,7 +78,6 @@ private:
 	double magnitude2(Point l){
 		return l.x*l.x + l.y*l.y;
 	}
-
 	static bool comparePoints(const Point &l, const Point &r) {
 		return ((l.x*r.y - r.x*l.y) > 0);
 	}
@@ -90,17 +90,21 @@ private:
 				else{
 					sortedPoints.erase(sortedPoints.begin() + i + 1);
 				}
+				i--;
 			}
 		}
 	}
 	void GrahamsScan(){
 		LowestIndex();
 		sortedPoints = points;
+		//cout << sortedPoints[0].x << " " << sortedPoints[0].y << endl;
 		vectorise(0);
 		sort(sortedPoints.begin()+1, sortedPoints.end(), comparePoints);
-		//removeDegeneracies();
+		removeDegeneracies();
 		unvectorise(0);
-
+		// for(int i = 0;i<sortedPoints.size();i++){
+		// 	cout << sortedPoints[i].x << "," << sortedPoints[i].y << endl;
+		// }
 		convexHull.push_back(sortedPoints[0]);
 		convexHull.push_back(sortedPoints[1]);
 		convexHull.push_back(sortedPoints[2]);
@@ -112,7 +116,7 @@ private:
 			Point v2 = makeVector(p1, p2);
 			Point v3 = makeVector(p2, p3);
 			double cp = crossProduct(v2, v3);
-			if(cp >= 0){
+			if(cp > 0){
 				convexHull.push_back(p2);
 			}
 			convexHull.push_back(p3);

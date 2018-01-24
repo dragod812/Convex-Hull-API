@@ -26,6 +26,14 @@ void normalize(double *x, double *y){
 void processKeyboardInput(GLFWwindow *window){
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS){
+		ConvexHull CH(chPoints, CONVEX_HULL_ALGO::GRAHAMS_SCAN);
+		vector< vec3 > LP;
+		for(size_t i = 0;i<CH.convexHull.size();i++){
+			LP.push_back(vec3(CH.convexHull[i].x, CH.convexHull[i].y, 0.0));
+		}
+		linePoints = LP;
+	}
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -45,13 +53,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		chp.x = xpos;
 		chp.y = ypos;
 		chPoints.push_back(chp);
-		if(chPoints.size() > 2){
-			ConvexHull CH(chPoints, CONVEX_HULL_ALGO::GRAHAMS_SCAN);
-			linePoints.resize(0);
-			for(size_t i = 0;i<CH.convexHull.size();i++){
-				linePoints.push_back(vec3(CH.convexHull[i].x, CH.convexHull[i].y, 0.0));
-			}
-		}
+
 	}
 }
 int main(){
@@ -112,7 +114,7 @@ int main(){
 		glGenBuffers(1, &VBOL);
 		glBindVertexArray(VAOL);
 		glBindBuffer(GL_ARRAY_BUFFER, VBOL);
-		glBufferData(GL_ARRAY_BUFFER, Points.size()*sizeof(vec3), &Points[0], GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, linePoints.size()*sizeof(vec3), &linePoints[0], GL_DYNAMIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), NULL);
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
