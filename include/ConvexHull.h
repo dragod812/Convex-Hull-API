@@ -38,7 +38,7 @@ private:
 	vector<Point> sortedPoints;
 	void LowestIndex(){
 		int minIndx = 0;
-		for(size_t i = 1;i<points.size();i++){
+		for(size_t i = 0;i<points.size();i++){
 			if(points[i].y < points[minIndx].y){
 				minIndx = i;
 			}
@@ -81,6 +81,12 @@ private:
 	static bool comparePoints(const Point &l, const Point &r) {
 		return ((l.x*r.y - r.x*l.y) > 0);
 	}
+    static bool basisX(const Point &l, const Point &r) {
+        return (l.x < r.x);
+    }
+    static bool basisY(const Point &l, const Point &r) {
+        return (l.y < r.y);
+    }
 	void removeDegeneracies(){
 		for(size_t i = 1;i<sortedPoints.size()-1;i++){
 			if(crossProduct(sortedPoints[i], sortedPoints[i+1]) == 0){
@@ -94,20 +100,32 @@ private:
 			}
 		}
 	}
+    int medianX(){
+        sortedPoints = points;
+        sort(sortedPoints.begin(), sortedPoints.end(), basisX);
+        int indx = sortedPoints.size() / 2;
+        if(sortedPoints.size()%2 == 0){
+            return (double)(sortedPoints[indx].x + sortedPoints[indx-1].x)/2;
+        }
+        return sortedPoints[indx].x;
+    }
 	void GrahamsScan(){
 		LowestIndex();
 		sortedPoints = points;
+        //for(int i = 0;i<sortedPoints.size();i++){
+	    //   	cout << sortedPoints[i].x << " " << sortedPoints[i].y << endl ;
+	    // }
+        // cout << endl;
+
+
 		//cout << sortedPoints[0].x << " " << sortedPoints[0].y << endl;
 		vectorise(0);
 		sort(sortedPoints.begin()+1, sortedPoints.end(), comparePoints);
 		removeDegeneracies();
 		unvectorise(0);
-		// for(int i = 0;i<sortedPoints.size();i++){
-		// 	cout << sortedPoints[i].x << "," << sortedPoints[i].y << endl;
-		// }
 		convexHull.push_back(sortedPoints[0]);
 		convexHull.push_back(sortedPoints[1]);
-		convexHull.push_back(sortedPoints[2]);
+        convexHull.push_back(sortedPoints[2]);
 		for(size_t i = 3;i<sortedPoints.size();i++){
 			Point p2 = convexHull.back();
 			convexHull.pop_back();
@@ -115,15 +133,65 @@ private:
 			Point p3 = sortedPoints[i];
 			Point v2 = makeVector(p1, p2);
 			Point v3 = makeVector(p2, p3);
-			double cp = crossProduct(v2, v3);
-			if(cp > 0){
-				convexHull.push_back(p2);
-			}
-			convexHull.push_back(p3);
-		}
-	}
-	void JarvisMarch(){
+			if(crossProduct(v2,v3) >= 0){
 
+				convexHull.push_back(p2);
+			    convexHull.push_back(p3);
+
+			}
+            else
+                i--;
+		}
+
+		 for(int i = 0;i<convexHull.size();i++){
+		   	cout << convexHull[i].x << " " << convexHull[i].y << endl ;
+		 }
+	}
+    Point leftmostPoint;
+	//Point leftmostPoint; //Contains the leftmost point
+
+	void leftmostIndx(){  // Function to find the leftmost point.
+		int leftmostIndex=0;
+		for(size_t i=0;i<points.size();i++){
+			if(points[i].x<points[leftmostIndex].x){
+				leftmostIndex=i;
+			}
+		}
+		leftmostPoint=points[leftmostIndex];
+	}
+
+	void JarvisMarch(){
+		leftmostIndx();
+		Point pointOnHull=leftmostPoint;
+		int i=0;
+		Point endpoint;
+		while(1){
+			convexHull.push_back(pointOnHull);
+			endpoint=points[0];
+			for(size_t j=1;j<points.size();j++){
+				Point candidateEdge=makeVector(pointOnHull,endpoint);
+				Point temp=makeVector(pointOnHull,points[j]);
+				if((crossProduct(candidateEdge,temp)<0)||(pointOnHull.x==endpoint.x&&pointOnHull.y==endpoint.y)){
+					endpoint=points[j];
+				}
+				else if(crossProduct(candidateEdge,temp)==0){
+					if(magnitude2(candidateEdge)>magnitude2(temp)){
+						continue;
+					}
+					else{
+						endpoint=points[j];
+					}
+				}
+				if(pointOnHull.x==points[j].x&&pointOnHull.y==points[j].y){
+					continue;
+				}
+			}
+			pointOnHull=endpoint;
+			if(endpoint.x==convexHull[0].x&&endpoint.y==convexHull[0].y){
+				break;
+			}
+		}
+		//while(endpoint.x!=convexHull[0].x&&endpoint.y!=convexHull[0].y);
 	}
 	void KirkpatrickSeidel(){
 

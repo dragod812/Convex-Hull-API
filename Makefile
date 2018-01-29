@@ -10,5 +10,6 @@ main: main.cpp $(convexhull) $(point) $(GLAD) $(shader)
 	g++ main.cpp $(GLAD) $(LIBS) $(CFLAGS)
 glad.o: $(GLADH)
 	g++ -c $(GLADC)
-ConvexHull: ConvexHull.cpp Point.h
-	g++ ConvexHull.cpp
+ConvexHull: Point.h
+	g++ $(convexhull)
+
