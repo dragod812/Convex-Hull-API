@@ -16,7 +16,7 @@ const GLuint SCR_HEIGHT = 1080;
 bool hullDrawn = false;
 vector< vec3 > Points;
 vector< vec3 > linePoints;
-vector< Point > chPoints;
+vector< Point<double> > chPoints;
 void adjustOrigin(double *x, double *y){
 	*y = SCR_HEIGHT - *y;
 }
@@ -30,16 +30,6 @@ void normalize(double *x, double *y){
 void processKeyboardInput(GLFWwindow *window){
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS){
-		ConvexHull CH(chPoints, CONVEX_HULL_ALGO::GRAHAMS_SCAN);
-		vector< vec3 > LP;
-		for(size_t i = 0;i<CH.convexHull.size();i++){
-            normalize(&CH.convexHull[i].x, &CH.convexHull[i].y);
-			LP.push_back(vec3(CH.convexHull[i].x, CH.convexHull[i].y, 0.0));
-		}
-        hullDrawn = true;
-		linePoints = LP;
-	}
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -53,13 +43,23 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
         adjustOrigin(&xpos, &ypos);
-		Point chp;
+		Point<double> chp;
 		chp.x = xpos;
 		chp.y = ypos;
 		normalize(&xpos, &ypos);
 		Points.push_back(vec3(xpos, ypos, 0));
+		vector< vec3 > LP;
 		//cout << xpos << ',' << ypos << endl;
 		chPoints.push_back(chp);
+        if(chPoints.size() > 2){
+            ConvexHull<double> CH(chPoints, CONVEX_HULL_ALGO::KIRKPATRICK_SEIDEL);
+            for(size_t i = 0;i<CH.convexHull.size();i++){
+                normalize(&CH.convexHull[i].x, &CH.convexHull[i].y);
+                LP.push_back(vec3(CH.convexHull[i].x, CH.convexHull[i].y, 0.0));
+            }
+        }
+        hullDrawn = true;
+		linePoints = LP;
 
 	}
 }
